@@ -1,92 +1,78 @@
 import { NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 
-type Snapshot = {
-  time: number;
-  adapters: Record<string, { rx: number; tx: number }>;
-};
-
-let lastSnapshot: Snapshot | null = null;
+type Snapshot = { time: number; rx: number; tx: number };
+let last: Snapshot | null = null;
 const history: { time: string; download: number; upload: number }[] = [];
 
-function getWindowsAdapterStats(): Record<string, { rx: number; tx: number }> {
-  const ps = `Get-NetAdapterStatistics | Where-Object {$_.ReceivedBytes -gt 0} | Select-Object Name, ReceivedBytes, SentBytes | ConvertTo-Json`;
-  const out = execSync(`powershell -NoProfile -Command "${ps}"`, { timeout: 5000 }).toString().trim();
-  const parsed = JSON.parse(out);
-  const items = Array.isArray(parsed) ? parsed : [parsed];
-  const result: Record<string, { rx: number; tx: number }> = {};
-  for (const item of items) {
-    result[item.Name] = { rx: item.ReceivedBytes, tx: item.SentBytes };
+// netstat -e — toujours disponible sur Windows, pas besoin de droits admin
+function readNetstatE(): { rx: number; tx: number } {
+  const out = execSync('netstat -e', { timeout: 4000, encoding: 'utf8' });
+  for (const line of out.split('\n')) {
+    const t = line.trim();
+    // Anglais: "Bytes  1234  5678"  /  Français: "Octets  1234  5678"
+    if (/^(bytes|octets)/i.test(t)) {
+      const parts = t.split(/\s+/);
+      if (parts.length >= 3) {
+        const rx = parseInt(parts[1].replace(/[^0-9]/g, '')) || 0;
+        const tx = parseInt(parts[2].replace(/[^0-9]/g, '')) || 0;
+        if (rx > 0 || tx > 0) return { rx, tx };
+      }
+    }
   }
-  return result;
+  return { rx: 0, tx: 0 };
 }
 
-function getWindowsPing(): number {
+function getPing(): number {
   try {
-    const out = execSync('ping -n 1 8.8.8.8', { timeout: 3000 }).toString();
-    // Format: "Moyenne = 12ms" (FR) or "Average = 12ms" (EN)
-    const match = out.match(/[=<]\s*(\d+)\s*ms/i);
-    return match ? parseInt(match[1]) : 0;
+    // -w 1000 = timeout 1s, -n 1 = 1 paquet
+    const out = execSync('ping -n 1 -w 1000 8.8.8.8', { timeout: 3000, encoding: 'utf8' });
+    const m = out.match(/[=<]\s*(\d+)\s*ms/i);
+    return m ? parseInt(m[1]) : 0;
   } catch {
     return 0;
   }
 }
 
-function mainAdapter(data: Record<string, { rx: number; tx: number }>): string {
-  let best = '';
-  let bestTotal = 0;
-  for (const [name, v] of Object.entries(data)) {
-    const total = v.rx + v.tx;
-    if (total > bestTotal) { bestTotal = total; best = name; }
-  }
-  return best;
-}
-
 export async function GET() {
   try {
     const now = Date.now();
-    const current = getWindowsAdapterStats();
-    const iface = mainAdapter(current);
+    const { rx, tx } = readNetstatE();
 
     let dlMbps = 0;
     let ulMbps = 0;
 
-    if (iface && current[iface] && lastSnapshot?.adapters[iface]) {
-      const dt = (now - lastSnapshot.time) / 1000;
-      if (dt > 0.1) {
-        const rxDiff = current[iface].rx - lastSnapshot.adapters[iface].rx;
-        const txDiff = current[iface].tx - lastSnapshot.adapters[iface].tx;
-        dlMbps = Math.max(0, (rxDiff * 8) / (dt * 1_000_000));
-        ulMbps = Math.max(0, (txDiff * 8) / (dt * 1_000_000));
+    if (last && last.rx > 0) {
+      const dt = (now - last.time) / 1000;
+      if (dt > 0.1 && rx >= last.rx && tx >= last.tx) {
+        dlMbps = Math.max(0, ((rx - last.rx) * 8) / (dt * 1_000_000));
+        ulMbps = Math.max(0, ((tx - last.tx) * 8) / (dt * 1_000_000));
       }
     }
+    last = { time: now, rx, tx };
 
-    lastSnapshot = { time: now, adapters: current };
+    const ping = getPing();
 
-    const timeLabel = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    history.push({ time: timeLabel, download: Math.round(dlMbps * 10) / 10, upload: Math.round(ulMbps * 10) / 10 });
-    if (history.length > 24) history.shift();
-
-    const ping = getWindowsPing();
-
-    const totalDownloadMB = iface ? Math.round(current[iface].rx / (1024 * 1024)) : 0;
-    const totalUploadMB = iface ? Math.round(current[iface].tx / (1024 * 1024)) : 0;
+    const label = new Date().toLocaleTimeString('fr-FR', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
+    history.push({
+      time: label,
+      download: Math.round(dlMbps * 10) / 10,
+      upload: Math.round(ulMbps * 10) / 10,
+    });
+    if (history.length > 48) history.shift();
 
     return NextResponse.json({
-      iface,
+      iface: 'Réseau',
       dlMbps: Math.round(dlMbps * 10) / 10,
       ulMbps: Math.round(ulMbps * 10) / 10,
       ping,
-      totalDownloadMB,
-      totalUploadMB,
+      totalDownloadMB: Math.round(rx / (1024 * 1024)),
+      totalUploadMB: Math.round(tx / (1024 * 1024)),
       history: [...history],
-      allInterfaces: Object.entries(current).map(([name, v]) => ({
-        name,
-        rxMB: Math.round(v.rx / (1024 * 1024)),
-        txMB: Math.round(v.tx / (1024 * 1024)),
-      })),
     });
   } catch (e: any) {
-    return NextResponse.json({ error: `Windows API error: ${e.message}` }, { status: 500 });
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
