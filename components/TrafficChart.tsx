@@ -1,0 +1,131 @@
+'use client';
+
+import { useState } from 'react';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import { TIMELINE_24H, TIMELINE_7D } from '@/lib/data';
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      className="glass rounded-xl p-3"
+      style={{ border: '1px solid rgba(0,212,255,0.2)', minWidth: 140 }}
+    >
+      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>{label}</div>
+      {payload.map((p: any) => (
+        <div key={p.name} className="flex items-center gap-2" style={{ fontSize: 12, marginBottom: 2 }}>
+          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+          <span style={{ color: 'var(--text-secondary)' }}>{p.name === 'download' ? '↓' : '↑'}</span>
+          <span style={{ color: p.color, fontWeight: 600 }}>{p.value} MB/s</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default function TrafficChart() {
+  const [range, setRange] = useState<'24h' | '7j'>('24h');
+  const data = range === '24h' ? TIMELINE_24H : TIMELINE_7D;
+
+  return (
+    <div
+      className="glass rounded-2xl p-6 fade-in-up"
+      style={{ animationDelay: '200ms', border: '1px solid rgba(0,212,255,0.1)' }}
+    >
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
+            Trafic Réseau
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+            Débit en temps réel
+          </div>
+        </div>
+        <div className="flex gap-1 rounded-xl p-1" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          {(['24h', '7j'] as const).map(r => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className="rounded-lg px-3 py-1.5 transition-all duration-200"
+              style={{
+                fontSize: 12,
+                fontWeight: 500,
+                background: range === r ? 'rgba(0,212,255,0.15)' : 'transparent',
+                color: range === r ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                border: range === r ? '1px solid rgba(0,212,255,0.25)' : '1px solid transparent',
+              }}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ height: 220 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+            <defs>
+              <linearGradient id="gDown" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#00d4ff" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="gUp" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#7b2fff" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#7b2fff" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+            <XAxis
+              dataKey="time"
+              tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="download"
+              stroke="#00d4ff"
+              strokeWidth={2}
+              fill="url(#gDown)"
+              dot={false}
+              activeDot={{ r: 4, fill: '#00d4ff', strokeWidth: 0 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="upload"
+              stroke="#7b2fff"
+              strokeWidth={2}
+              fill="url(#gUp)"
+              dot={false}
+              activeDot={{ r: 4, fill: '#7b2fff', strokeWidth: 0 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="flex gap-6 mt-4">
+        {[
+          { label: 'Téléchargement', color: '#00d4ff', symbol: '↓' },
+          { label: 'Envoi', color: '#7b2fff', symbol: '↑' },
+        ].map(item => (
+          <div key={item.label} className="flex items-center gap-2">
+            <div className="w-3 h-0.5 rounded" style={{ background: item.color }} />
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+              {item.symbol} {item.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
