@@ -1,25 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { TIMELINE_24H, TIMELINE_7D } from '@/lib/data';
+import { useState, useEffect } from 'react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TIMELINE_7D } from '@/lib/data';
+
+type Point = { time: string; download: number; upload: number };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      className="glass rounded-xl p-3"
-      style={{ border: '1px solid rgba(0,212,255,0.25)', minWidth: 130 }}
-    >
+    <div className="glass rounded-xl p-3" style={{ border: '1px solid rgba(0,212,255,0.25)', minWidth: 130 }}>
       <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>{label}</div>
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2" style={{ fontSize: 12, marginBottom: 2 }}>
           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
           <span style={{ color: 'var(--text-secondary)' }}>{p.name === 'download' ? '↓' : '↑'}</span>
-          <span style={{ color: p.color, fontWeight: 700 }}>{p.value} MB/s</span>
+          <span style={{ color: p.color, fontWeight: 700 }}>{p.value} Mbps</span>
         </div>
       ))}
     </div>
@@ -27,8 +23,30 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function TrafficChart() {
-  const [range, setRange] = useState<'24h' | '7j'>('24h');
-  const data = range === '24h' ? TIMELINE_24H : TIMELINE_7D;
+  const [range, setRange] = useState<'live' | '7j'>('live');
+  const [liveHistory, setLiveHistory] = useState<Point[]>([]);
+  const [isReal, setIsReal] = useState(false);
+
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const res = await fetch('/api/stats');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.history && data.history.length > 0) {
+          setLiveHistory(data.history);
+          setIsReal(true);
+        }
+      } catch {}
+    }
+    fetchHistory();
+    const interval = setInterval(fetchHistory, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const data = range === 'live'
+    ? (liveHistory.length > 0 ? liveHistory : [{ time: '--', download: 0, upload: 0 }])
+    : TIMELINE_7D;
 
   return (
     <div
@@ -37,11 +55,20 @@ export default function TrafficChart() {
     >
       <div className="flex items-center justify-between mb-4 gap-2">
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Trafic Réseau</div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>Débit en temps réel</div>
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Trafic Réseau</span>
+            {isReal && range === 'live' && (
+              <span className="rounded-full px-2 py-0.5" style={{ fontSize: 9, fontWeight: 700, background: 'rgba(0,255,136,0.1)', color: '#00ff88', border: '1px solid rgba(0,255,136,0.2)' }}>
+                RÉEL
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+            {range === 'live' ? 'Dernières 24 mesures · 2s/point' : '7 derniers jours'}
+          </div>
         </div>
         <div className="flex gap-1 rounded-xl p-1 flex-shrink-0" style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          {(['24h', '7j'] as const).map(r => (
+          {(['live', '7j'] as const).map(r => (
             <button
               key={r}
               onClick={() => setRange(r)}
@@ -53,7 +80,7 @@ export default function TrafficChart() {
                 border: range === r ? '1px solid rgba(0,212,255,0.3)' : '1px solid transparent',
               }}
             >
-              {r}
+              {r === 'live' ? 'Live' : '7j'}
             </button>
           ))}
         </div>
@@ -73,19 +100,8 @@ export default function TrafficChart() {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-            <XAxis
-              dataKey="time"
-              tick={{ fill: '#6b8fa8', fontSize: 9 }}
-              axisLine={false}
-              tickLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tick={{ fill: '#6b8fa8', fontSize: 9 }}
-              axisLine={false}
-              tickLine={false}
-              width={40}
-            />
+            <XAxis dataKey="time" tick={{ fill: '#6b8fa8', fontSize: 9 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fill: '#6b8fa8', fontSize: 9 }} axisLine={false} tickLine={false} width={40} />
             <Tooltip content={<CustomTooltip />} />
             <Area type="monotone" dataKey="download" stroke="#00d4ff" strokeWidth={2} fill="url(#gDown)" dot={false} activeDot={{ r: 4, fill: '#00d4ff', strokeWidth: 0 }} />
             <Area type="monotone" dataKey="upload" stroke="#7b2fff" strokeWidth={2} fill="url(#gUp)" dot={false} activeDot={{ r: 4, fill: '#7b2fff', strokeWidth: 0 }} />
