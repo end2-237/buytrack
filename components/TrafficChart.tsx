@@ -12,14 +12,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return (
     <div
       className="glass rounded-xl p-3"
-      style={{ border: '1px solid rgba(0,212,255,0.2)', minWidth: 140 }}
+      style={{ border: '1px solid rgba(0,212,255,0.25)', minWidth: 130 }}
     >
       <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>{label}</div>
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2" style={{ fontSize: 12, marginBottom: 2 }}>
-          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
           <span style={{ color: 'var(--text-secondary)' }}>{p.name === 'download' ? '↓' : '↑'}</span>
-          <span style={{ color: p.color, fontWeight: 600 }}>{p.value} MB/s</span>
+          <span style={{ color: p.color, fontWeight: 700 }}>{p.value} MB/s</span>
         </div>
       ))}
     </div>
@@ -32,30 +32,25 @@ export default function TrafficChart() {
 
   return (
     <div
-      className="glass rounded-2xl p-6 fade-in-up"
-      style={{ animationDelay: '200ms', border: '1px solid rgba(0,212,255,0.1)' }}
+      className="glass rounded-2xl p-5 fade-in-up"
+      style={{ animationDelay: '200ms', border: '1px solid rgba(0,212,255,0.1)', minWidth: 0 }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
-            Trafic Réseau
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-            Débit en temps réel
-          </div>
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Trafic Réseau</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>Débit en temps réel</div>
         </div>
-        <div className="flex gap-1 rounded-xl p-1" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex gap-1 rounded-xl p-1 flex-shrink-0" style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)' }}>
           {(['24h', '7j'] as const).map(r => (
             <button
               key={r}
               onClick={() => setRange(r)}
-              className="rounded-lg px-3 py-1.5 transition-all duration-200"
+              className="rounded-lg px-3 py-1 transition-all duration-200"
               style={{
-                fontSize: 12,
-                fontWeight: 500,
+                fontSize: 11, fontWeight: 600,
                 background: range === r ? 'rgba(0,212,255,0.15)' : 'transparent',
                 color: range === r ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                border: range === r ? '1px solid rgba(0,212,255,0.25)' : '1px solid transparent',
+                border: range === r ? '1px solid rgba(0,212,255,0.3)' : '1px solid transparent',
               }}
             >
               {r}
@@ -64,65 +59,45 @@ export default function TrafficChart() {
         </div>
       </div>
 
-      <div style={{ height: 220 }}>
+      <div style={{ height: 200, width: '100%' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
             <defs>
               <linearGradient id="gDown" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.25} />
+                <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.3} />
                 <stop offset="95%" stopColor="#00d4ff" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gUp" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#7b2fff" stopOpacity={0.25} />
+                <stop offset="5%" stopColor="#7b2fff" stopOpacity={0.3} />
                 <stop offset="95%" stopColor="#7b2fff" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
               dataKey="time"
-              tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+              tick={{ fill: '#6b8fa8', fontSize: 9 }}
               axisLine={false}
               tickLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+              tick={{ fill: '#6b8fa8', fontSize: 9 }}
               axisLine={false}
               tickLine={false}
+              width={40}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="download"
-              stroke="#00d4ff"
-              strokeWidth={2}
-              fill="url(#gDown)"
-              dot={false}
-              activeDot={{ r: 4, fill: '#00d4ff', strokeWidth: 0 }}
-            />
-            <Area
-              type="monotone"
-              dataKey="upload"
-              stroke="#7b2fff"
-              strokeWidth={2}
-              fill="url(#gUp)"
-              dot={false}
-              activeDot={{ r: 4, fill: '#7b2fff', strokeWidth: 0 }}
-            />
+            <Area type="monotone" dataKey="download" stroke="#00d4ff" strokeWidth={2} fill="url(#gDown)" dot={false} activeDot={{ r: 4, fill: '#00d4ff', strokeWidth: 0 }} />
+            <Area type="monotone" dataKey="upload" stroke="#7b2fff" strokeWidth={2} fill="url(#gUp)" dot={false} activeDot={{ r: 4, fill: '#7b2fff', strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="flex gap-6 mt-4">
-        {[
-          { label: 'Téléchargement', color: '#00d4ff', symbol: '↓' },
-          { label: 'Envoi', color: '#7b2fff', symbol: '↑' },
-        ].map(item => (
+      <div className="flex gap-5 mt-3">
+        {[{ label: 'Téléchargement', color: '#00d4ff', s: '↓' }, { label: 'Envoi', color: '#7b2fff', s: '↑' }].map(item => (
           <div key={item.label} className="flex items-center gap-2">
-            <div className="w-3 h-0.5 rounded" style={{ background: item.color }} />
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-              {item.symbol} {item.label}
-            </span>
+            <div className="w-4 h-0.5 rounded-full" style={{ background: item.color }} />
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{item.s} {item.label}</span>
           </div>
         ))}
       </div>
