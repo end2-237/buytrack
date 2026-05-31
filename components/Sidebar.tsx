@@ -1,6 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  LayoutDashboard,
+  Monitor,
+  AppWindow,
+  BellRing,
+  Settings2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
 type Tab = 'dashboard' | 'devices' | 'apps' | 'alerts' | 'settings';
 
@@ -10,96 +19,112 @@ interface SidebarProps {
 }
 
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard', icon: '⊞' },
-  { id: 'devices', label: 'Appareils', icon: '◈' },
-  { id: 'apps', label: 'Applications', icon: '⬡' },
-  { id: 'alerts', label: 'Alertes', icon: '◎' },
-  { id: 'settings', label: 'Paramètres', icon: '⚙' },
-] as const;
+  { id: 'dashboard' as Tab, label: 'Dashboard', Icon: LayoutDashboard },
+  { id: 'devices' as Tab, label: 'Appareils', Icon: Monitor },
+  { id: 'apps' as Tab, label: 'Applications', Icon: AppWindow },
+  { id: 'alerts' as Tab, label: 'Alertes', Icon: BellRing },
+  { id: 'settings' as Tab, label: 'Paramètres', Icon: Settings2 },
+];
 
 export default function Sidebar({ active, onChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <aside
-      className="glass glow-cyan flex flex-col transition-all duration-300"
+      className="flex flex-col transition-all duration-300 flex-shrink-0"
       style={{
-        width: collapsed ? 64 : 220,
+        width: collapsed ? 60 : 240,
         minHeight: '100vh',
-        borderRight: '1px solid rgba(0,212,255,0.1)',
-        background: 'linear-gradient(180deg, rgba(0,212,255,0.05) 0%, rgba(123,47,255,0.03) 100%)',
+        background: 'var(--surface)',
+        borderRight: '1px solid var(--border)',
       }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 p-4 mb-2" style={{ borderBottom: '1px solid rgba(0,212,255,0.08)' }}>
-        <div
-          className="flex items-center justify-center rounded-xl text-sm font-bold"
-          style={{
-            width: 36, height: 36,
-            background: 'linear-gradient(135deg, #00d4ff, #7b2fff)',
-            boxShadow: '0 0 20px rgba(0,212,255,0.4)',
-            flexShrink: 0,
-          }}
-        >
-          BT
-        </div>
+      <div
+        className="flex items-center gap-3"
+        style={{
+          padding: collapsed ? '20px 12px' : '20px 24px',
+          borderBottom: '1px solid var(--border)',
+          minHeight: 64,
+        }}
+      >
         {!collapsed && (
-          <div>
-            <div className="gradient-text font-bold text-base leading-tight">BuyTrack</div>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: 2 }}>NET MONITOR</div>
+          <div className="flex-1 min-w-0">
+            <div className="gradient-text font-bold" style={{ fontSize: 16, lineHeight: 1.2 }}>
+              BuyTrack
+            </div>
+            <div style={{ fontSize: 9, color: 'var(--text-2)', letterSpacing: '0.15em', marginTop: 2 }}>
+              NET MONITOR
+            </div>
           </div>
         )}
         <button
           onClick={() => setCollapsed(c => !c)}
-          className="ml-auto opacity-40 hover:opacity-100 transition-opacity"
-          style={{ fontSize: 12, color: 'var(--accent-cyan)', flexShrink: 0 }}
+          className="transition-colors rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{
+            width: 28,
+            height: 28,
+            color: 'var(--text-2)',
+            background: 'transparent',
+            border: '1px solid var(--border)',
+          }}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? '▶' : '◀'}
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-4 flex flex-col gap-1">
-        {NAV.map(item => {
-          const isActive = active === item.id;
+      <nav
+        className="flex-1 flex flex-col"
+        style={{ padding: collapsed ? '16px 8px' : '16px 12px', gap: 2 }}
+      >
+        {NAV.map(({ id, label, Icon }) => {
+          const isActive = active === id;
           return (
             <button
-              key={item.id}
-              onClick={() => onChange(item.id as Tab)}
-              className="flex items-center gap-3 rounded-xl transition-all duration-200 text-left"
+              key={id}
+              onClick={() => onChange(id)}
+              className="flex items-center transition-all duration-150 relative rounded-lg text-left"
               style={{
-                padding: collapsed ? '10px 12px' : '10px 14px',
-                background: isActive ? 'rgba(0,212,255,0.1)' : 'transparent',
-                border: isActive ? '1px solid rgba(0,212,255,0.2)' : '1px solid transparent',
-                color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                boxShadow: isActive ? '0 0 15px rgba(0,212,255,0.1)' : 'none',
+                height: 44,
+                gap: 12,
+                padding: collapsed ? '0 14px' : '0 16px',
+                background: isActive ? 'rgba(0,212,255,0.06)' : 'transparent',
+                color: isActive ? 'var(--cyan)' : 'var(--text-2)',
+                borderLeft: isActive ? '2px solid var(--cyan)' : '2px solid transparent',
+                fontWeight: isActive ? 500 : 400,
+                fontSize: 13,
               }}
             >
-              <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
+              <Icon size={16} style={{ flexShrink: 0 }} />
               {!collapsed && (
-                <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, whiteSpace: 'nowrap' }}>
-                  {item.label}
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {label}
                 </span>
-              )}
-              {!collapsed && isActive && (
-                <div className="ml-auto w-1 h-1 rounded-full" style={{ background: 'var(--accent-cyan)' }} />
               )}
             </button>
           );
         })}
       </nav>
 
-      {/* Status indicator */}
-      <div className="p-4" style={{ borderTop: '1px solid rgba(0,212,255,0.08)' }}>
-        <div className="flex items-center gap-2">
-          <div
-            className="rounded-full"
-            style={{ width: 8, height: 8, background: 'var(--accent-green)', boxShadow: '0 0 8px var(--accent-green)' }}
-          />
-          {!collapsed && (
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Connecté · 1 Gbps</span>
-          )}
-        </div>
+      {/* Status */}
+      <div
+        className="flex items-center gap-2"
+        style={{
+          padding: collapsed ? '16px 12px' : '16px 24px',
+          borderTop: '1px solid var(--border)',
+        }}
+      >
+        <div
+          className="rounded-full flex-shrink-0"
+          style={{ width: 8, height: 8, background: 'var(--green)' }}
+        />
+        {!collapsed && (
+          <span style={{ fontSize: 11, color: 'var(--text-2)' }}>
+            Connecté
+          </span>
+        )}
       </div>
     </aside>
   );
