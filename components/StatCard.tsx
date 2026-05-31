@@ -29,7 +29,6 @@ export default function StatCard({
         padding: 24,
         border: `1px solid ${color}26`,
         background: `linear-gradient(135deg, ${color}07 0%, var(--surface) 100%)`,
-        borderTop: `1px solid ${color}40`,
       }}
     >
       {/* Top accent line */}

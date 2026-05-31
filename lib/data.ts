@@ -153,11 +153,11 @@ export function formatBytes(mb: number): string {
 
 export function getDeviceIcon(type: Device['type']): string {
   const icons: Record<Device['type'], string> = {
-    phone: '📱',
-    laptop: '💻',
-    tablet: '⬛',
-    tv: '📺',
-    router: '📡',
+    phone: 'phone',
+    laptop: 'laptop',
+    tablet: 'tablet',
+    tv: 'tv',
+    router: 'router',
   };
   return icons[type];
 }

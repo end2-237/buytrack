@@ -18,34 +18,45 @@ export default function AppsView() {
         acc[app.name].sessions += app.sessions;
       }
       return acc;
-    }, {} as Record<string, typeof allApps[0]>)
+    }, {} as Record<string, (typeof allApps)[0]>)
   );
 
   const currentDevice = DEVICES.find(d => d.id === selectedDevice);
   const displayApps = selectedDevice === 'all' ? deduped : (currentDevice?.apps ?? []);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <div className="fade-in-up">
-        <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: -0.5 }}>Applications</div>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.5, color: 'var(--text-1)' }}>
+          Applications
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
           Consommation par application sur tous vos appareils
         </div>
       </div>
 
       {/* Device filter */}
       <div
-        className="glass rounded-2xl p-4 fade-in-up flex gap-2 flex-wrap"
-        style={{ animationDelay: '100ms', border: '1px solid rgba(0,212,255,0.1)' }}
+        className="rounded-xl fade-in-up flex gap-2 flex-wrap"
+        style={{
+          padding: 24,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          animationDelay: '100ms',
+        }}
       >
         <button
           onClick={() => setSelectedDevice('all')}
-          className="rounded-xl px-4 py-2 transition-all"
+          className="rounded-lg px-4 py-2 transition-all"
           style={{
-            fontSize: 12, fontWeight: 500,
-            background: selectedDevice === 'all' ? 'rgba(0,212,255,0.15)' : 'rgba(255,255,255,0.04)',
-            color: selectedDevice === 'all' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-            border: selectedDevice === 'all' ? '1px solid rgba(0,212,255,0.25)' : '1px solid rgba(255,255,255,0.06)',
+            fontSize: 12,
+            fontWeight: 500,
+            background: selectedDevice === 'all' ? 'rgba(0,212,255,0.12)' : 'var(--surface-2)',
+            color: selectedDevice === 'all' ? 'var(--cyan)' : 'var(--text-2)',
+            border:
+              selectedDevice === 'all'
+                ? '1px solid rgba(0,212,255,0.25)'
+                : '1px solid var(--border)',
           }}
         >
           Tous les appareils
@@ -54,12 +65,17 @@ export default function AppsView() {
           <button
             key={d.id}
             onClick={() => setSelectedDevice(d.id)}
-            className="rounded-xl px-4 py-2 transition-all"
+            className="rounded-lg px-4 py-2 transition-all"
             style={{
-              fontSize: 12, fontWeight: 500,
-              background: selectedDevice === d.id ? 'rgba(0,212,255,0.15)' : 'rgba(255,255,255,0.04)',
-              color: selectedDevice === d.id ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-              border: selectedDevice === d.id ? '1px solid rgba(0,212,255,0.25)' : '1px solid rgba(255,255,255,0.06)',
+              fontSize: 12,
+              fontWeight: 500,
+              background:
+                selectedDevice === d.id ? 'rgba(0,212,255,0.12)' : 'var(--surface-2)',
+              color: selectedDevice === d.id ? 'var(--cyan)' : 'var(--text-2)',
+              border:
+                selectedDevice === d.id
+                  ? '1px solid rgba(0,212,255,0.25)'
+                  : '1px solid var(--border)',
               opacity: d.status === 'offline' ? 0.5 : 1,
             }}
           >
@@ -68,20 +84,36 @@ export default function AppsView() {
         ))}
       </div>
 
-      {/* Stats for selected */}
-      <div className="grid grid-cols-3 gap-4 fade-in-up" style={{ animationDelay: '150ms' }}>
+      {/* Summary stats */}
+      <div
+        className="grid grid-cols-3 gap-5 fade-in-up"
+        style={{ animationDelay: '150ms' }}
+      >
         {[
-          { label: 'Applications', value: displayApps.length.toString(), color: '#00d4ff' },
-          { label: 'Téléchargé', value: formatBytes(displayApps.reduce((s, a) => s + a.download, 0)), color: '#7b2fff' },
-          { label: 'Envoyé', value: formatBytes(displayApps.reduce((s, a) => s + a.upload, 0)), color: '#00ff88' },
+          { label: 'Applications', value: displayApps.length.toString(), color: 'var(--cyan)' },
+          {
+            label: 'Telechargement',
+            value: formatBytes(displayApps.reduce((s, a) => s + a.download, 0)),
+            color: 'var(--purple)',
+          },
+          {
+            label: 'Envoi',
+            value: formatBytes(displayApps.reduce((s, a) => s + a.upload, 0)),
+            color: 'var(--green)',
+          },
         ].map(s => (
           <div
             key={s.label}
-            className="glass rounded-2xl p-4 text-center"
-            style={{ border: `1px solid ${s.color}20` }}
+            className="rounded-xl"
+            style={{
+              padding: 24,
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              textAlign: 'center',
+            }}
           >
             <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{s.label}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -89,7 +121,11 @@ export default function AppsView() {
       <div className="fade-in-up" style={{ animationDelay: '200ms' }}>
         <AppUsageList
           apps={displayApps}
-          title={selectedDevice === 'all' ? 'Toutes les applications (agrégé)' : `${currentDevice?.name}`}
+          title={
+            selectedDevice === 'all'
+              ? 'Toutes les applications (agrege)'
+              : currentDevice?.name ?? ''
+          }
         />
       </div>
     </div>

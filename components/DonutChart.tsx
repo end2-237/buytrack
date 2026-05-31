@@ -7,9 +7,16 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="glass rounded-xl p-3" style={{ border: '1px solid rgba(0,212,255,0.2)' }}>
+    <div
+      className="rounded-lg"
+      style={{
+        padding: '10px 14px',
+        background: 'var(--surface-2)',
+        border: '1px solid var(--border-active)',
+      }}
+    >
       <div style={{ fontSize: 12, fontWeight: 600, color: d.color }}>{d.name}</div>
-      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{formatBytes(d.download)}</div>
+      <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>{formatBytes(d.download)}</div>
     </div>
   );
 };
@@ -20,18 +27,35 @@ export default function DonutChart() {
 
   return (
     <div
-      className="glass rounded-2xl p-5 fade-in-up"
-      style={{ animationDelay: '400ms', border: '1px solid rgba(0,212,255,0.1)', minWidth: 0 }}
+      className="rounded-xl"
+      style={{
+        padding: 24,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        minWidth: 0,
+      }}
     >
-      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2 }}>Répartition</div>
-      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Top 5 apps · téléchargement</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginBottom: 2 }}>
+        Repartition
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 16 }}>
+        Top 5 apps · telechargement
+      </div>
 
-      <div style={{ height: 170 }}>
+      <div style={{ height: 160 }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={top5} cx="50%" cy="50%" innerRadius={48} outerRadius={72} paddingAngle={3} dataKey="download">
-              {top5.map((app) => (
-                <Cell key={app.id} fill={app.color} stroke="transparent" style={{ filter: `drop-shadow(0 0 5px ${app.color}50)` }} />
+            <Pie
+              data={top5}
+              cx="50%"
+              cy="50%"
+              innerRadius={52}
+              outerRadius={76}
+              paddingAngle={3}
+              dataKey="download"
+            >
+              {top5.map(app => (
+                <Cell key={app.id} fill={app.color} stroke="transparent" />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
@@ -39,12 +63,30 @@ export default function DonutChart() {
         </ResponsiveContainer>
       </div>
 
-      <div className="flex flex-col gap-2 mt-1">
+      {/* Legend */}
+      <div className="flex flex-col" style={{ gap: 8, marginTop: 12 }}>
         {top5.map(app => (
           <div key={app.id} className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: app.color }} />
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.name}</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: app.color, flexShrink: 0 }}>{((app.download / total) * 100).toFixed(0)}%</span>
+            <div
+              className="rounded-full flex-shrink-0"
+              style={{ width: 8, height: 8, background: app.color }}
+            />
+            <span
+              style={{
+                fontSize: 12,
+                color: 'var(--text-2)',
+                flex: 1,
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {app.name}
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: app.color, flexShrink: 0 }}>
+              {((app.download / total) * 100).toFixed(0)}%
+            </span>
           </div>
         ))}
       </div>

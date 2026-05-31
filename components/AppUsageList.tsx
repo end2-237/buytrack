@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { AppUsage, formatBytes } from '@/lib/data';
 
 interface AppUsageListProps {
@@ -8,81 +9,187 @@ interface AppUsageListProps {
   title?: string;
 }
 
+const SORT_LABELS: Record<string, string> = {
+  download: 'Telechargement',
+  upload: 'Envoi',
+  sessions: 'Sessions',
+};
+
 export default function AppUsageList({ apps, title = 'Top Applications' }: AppUsageListProps) {
   const [sortBy, setSortBy] = useState<'download' | 'upload' | 'sessions'>('download');
 
-  const maxVal = Math.max(...apps.map(a => a[sortBy]));
+  const maxVal = Math.max(1, ...apps.map(a => a[sortBy]));
   const sorted = [...apps].sort((a, b) => b[sortBy] - a[sortBy]);
 
   return (
     <div
-      className="glass rounded-2xl p-5 fade-in-up"
-      style={{ animationDelay: '300ms', border: '1px solid rgba(0,212,255,0.1)', minWidth: 0 }}
+      className="rounded-xl"
+      style={{
+        padding: 24,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        minWidth: 0,
+      }}
     >
-      <div className="flex items-center justify-between mb-4 gap-2">
+      {/* Header */}
+      <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>{apps.length} apps actives</div>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text-1)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {title}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>
+            {apps.length} app{apps.length !== 1 ? 's' : ''} actives
+          </div>
         </div>
-        <div className="flex gap-1 rounded-xl p-1 flex-shrink-0" style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        {/* Sort buttons */}
+        <div
+          className="flex gap-1 rounded-lg p-1 flex-shrink-0"
+          style={{
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+          }}
+        >
           {(['download', 'upload', 'sessions'] as const).map(k => (
             <button
               key={k}
               onClick={() => setSortBy(k)}
-              className="rounded-lg px-2 py-1 transition-all"
+              className="rounded-md px-2 py-1 transition-all"
               style={{
-                fontSize: 10, fontWeight: 600,
-                background: sortBy === k ? 'rgba(0,212,255,0.15)' : 'transparent',
-                color: sortBy === k ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                border: sortBy === k ? '1px solid rgba(0,212,255,0.25)' : '1px solid transparent',
+                fontSize: 10,
+                fontWeight: 600,
                 whiteSpace: 'nowrap',
+                background: sortBy === k ? 'rgba(0,212,255,0.12)' : 'transparent',
+                color: sortBy === k ? 'var(--cyan)' : 'var(--text-2)',
+                border: sortBy === k ? '1px solid rgba(0,212,255,0.2)' : '1px solid transparent',
               }}
             >
-              {k === 'download' ? '↓ DL' : k === 'upload' ? '↑ UL' : 'Sessions'}
+              {SORT_LABELS[k]}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        {sorted.map((app) => {
+      {/* Table header */}
+      <div
+        className="flex items-center gap-3"
+        style={{
+          padding: '6px 16px',
+          marginBottom: 4,
+          borderBottom: '1px solid var(--border)',
+        }}
+      >
+        <div style={{ width: 8, flexShrink: 0 }} />
+        <div style={{ flex: 1, fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em' }}>
+          APPLICATION
+        </div>
+        <div style={{ flex: 1 }} />
+        <div style={{ width: 80, textAlign: 'right', fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em' }}>
+          {SORT_LABELS[sortBy].toUpperCase()}
+        </div>
+      </div>
+
+      {/* Rows */}
+      <div className="flex flex-col" style={{ gap: 2 }}>
+        {sorted.map(app => {
           const pct = (app[sortBy] / maxVal) * 100;
           return (
             <div
               key={app.id}
-              className="rounded-xl p-3 transition-all duration-200 hover:scale-[1.005] cursor-pointer"
-              style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}
+              className="flex items-center gap-3 rounded-lg transition-colors"
+              style={{
+                minHeight: 48,
+                padding: '12px 16px',
+                cursor: 'default',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.background = 'var(--surface-2)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+              }}
             >
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex items-center justify-center rounded-lg font-bold flex-shrink-0"
-                  style={{ width: 30, height: 30, background: `${app.color}18`, border: `1px solid ${app.color}30`, color: app.color, fontSize: 11 }}
+              {/* Color dot */}
+              <div
+                className="rounded-full flex-shrink-0"
+                style={{ width: 8, height: 8, background: app.color }}
+              />
+
+              {/* Name + category */}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: 'var(--text-1)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
-                  {app.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{app.name}</span>
-                    <span className="rounded-full px-1.5" style={{ fontSize: 9, background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>{app.category}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span style={{ fontSize: 10, color: '#00d4ff' }}>↓ {formatBytes(app.download)}</span>
-                    <span style={{ fontSize: 10, color: '#7b2fff' }}>↑ {formatBytes(app.upload)}</span>
-                  </div>
-                  <div className="rounded-full mt-1.5 overflow-hidden" style={{ height: 2, background: 'rgba(255,255,255,0.05)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${app.color}, ${app.color}70)`, boxShadow: `0 0 4px ${app.color}50`, transition: 'width 0.8s ease' }} />
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span style={{ fontSize: 12, fontWeight: 700, color: app.color }}>
-                    {sortBy === 'sessions' ? app.sessions : formatBytes(app[sortBy])}
-                  </span>
+                  {app.name}
+                </span>
+                <span
+                  className="rounded px-1.5 py-0.5 flex-shrink-0"
+                  style={{
+                    fontSize: 9,
+                    color: 'var(--text-2)',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border)',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  {app.category}
+                </span>
+              </div>
+
+              {/* Mini bar */}
+              <div className="flex-1 min-w-0" style={{ maxWidth: 120 }}>
+                <div
+                  className="rounded-full overflow-hidden"
+                  style={{ height: 3, background: 'var(--surface-2)' }}
+                >
                   <div
-                    className="rounded-full px-1.5 py-0.5"
-                    style={{ fontSize: 9, fontWeight: 700, background: app.trend >= 0 ? 'rgba(0,255,136,0.1)' : 'rgba(255,59,59,0.1)', color: app.trend >= 0 ? '#00ff88' : '#ff3b3b' }}
-                  >
-                    {app.trend >= 0 ? '↑' : '↓'}{Math.abs(app.trend)}%
-                  </div>
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${pct}%`,
+                      background: `linear-gradient(90deg, ${app.color}, ${app.color}80)`,
+                      transition: 'width 0.6s ease',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Value + trend */}
+              <div className="flex flex-col items-end gap-1 flex-shrink-0" style={{ width: 80 }}>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: app.color,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {sortBy === 'sessions' ? app.sessions : formatBytes(app[sortBy])}
+                </span>
+                <div
+                  className="flex items-center gap-0.5"
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 600,
+                    color: app.trend >= 0 ? 'var(--green)' : 'var(--red)',
+                  }}
+                >
+                  {app.trend >= 0 ? <TrendingUp size={8} /> : <TrendingDown size={8} />}
+                  <span>{Math.abs(app.trend)}%</span>
                 </div>
               </div>
             </div>

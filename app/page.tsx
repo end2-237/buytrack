@@ -22,23 +22,29 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen grid-bg" style={{ background: 'var(--bg-primary)' }}>
-      {/* Radial glow effects */}
+    <div className="flex min-h-screen grid-bg" style={{ background: 'var(--bg)' }}>
+      {/* Subtle radial glows */}
       <div
         className="fixed pointer-events-none"
         style={{
-          top: -200, left: -200,
-          width: 600, height: 600,
-          background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)',
+          top: -200,
+          left: -200,
+          width: 600,
+          height: 600,
+          background:
+            'radial-gradient(circle, rgba(0,212,255,0.05) 0%, transparent 70%)',
           zIndex: 0,
         }}
       />
       <div
         className="fixed pointer-events-none"
         style={{
-          bottom: -200, right: -200,
-          width: 600, height: 600,
-          background: 'radial-gradient(circle, rgba(123,47,255,0.06) 0%, transparent 70%)',
+          bottom: -200,
+          right: -200,
+          width: 600,
+          height: 600,
+          background:
+            'radial-gradient(circle, rgba(124,58,237,0.05) 0%, transparent 70%)',
           zIndex: 0,
         }}
       />
@@ -46,7 +52,7 @@ export default function Home() {
       <div className="relative z-10 flex w-full">
         <Sidebar active={tab} onChange={setTab} />
 
-        <main className="flex-1 overflow-auto p-6 lg:p-8">
+        <main className="flex-1 overflow-auto px-8 py-6">
           <div className="max-w-6xl mx-auto">
             {views[tab]}
           </div>
