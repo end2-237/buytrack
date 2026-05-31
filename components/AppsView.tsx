@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { DEVICES, formatBytes } from '@/lib/data';
 import AppUsageList from './AppUsageList';
+import ConnectionsPanel from './ConnectionsPanel';
 
 export default function AppsView() {
   const [selectedDevice, setSelectedDevice] = useState('all');
@@ -118,15 +119,18 @@ export default function AppsView() {
         ))}
       </div>
 
-      <div className="fade-in-up" style={{ animationDelay: '200ms' }}>
+      {/* Apps + connexions côte à côte */}
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 20, minWidth: 0 }}
+        className="fade-in-up" >
         <AppUsageList
           apps={displayApps}
           title={
             selectedDevice === 'all'
-              ? 'Toutes les applications (agrege)'
+              ? 'Toutes les applications (agrégé)'
               : currentDevice?.name ?? ''
           }
         />
+        <ConnectionsPanel />
       </div>
     </div>
   );

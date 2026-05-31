@@ -7,6 +7,7 @@ import TrafficChart from './TrafficChart';
 import RealApps from './RealApps';
 import DonutChart from './DonutChart';
 import LiveTicker from './LiveTicker';
+import ConnectionsPanel from './ConnectionsPanel';
 import { DEVICES, formatBytes } from '@/lib/data';
 
 export default function Dashboard() {
@@ -121,6 +122,9 @@ export default function Dashboard() {
         <RealApps />
         <DonutChart />
       </div>
+
+      {/* Connexions web actives — toute la largeur */}
+      <ConnectionsPanel />
     </div>
   );
 }

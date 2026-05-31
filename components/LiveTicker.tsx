@@ -20,7 +20,7 @@ function formatMB(mb: number): string {
 export default function LiveTicker() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [history, setHistory] = useState<HistoryPoint[]>([]);
-  const [session, setSession] = useState(loadSession());
+  const [session, setSession] = useState({ dl: 0, ul: 0 });
   const [error, setError] = useState(false);
 
   async function fetchStats() {
@@ -54,11 +54,12 @@ export default function LiveTicker() {
   }
 
   useEffect(() => {
+    // Chargement localStorage uniquement côté client (évite l'erreur d'hydratation)
     const stored = loadHistory();
     if (stored.length > 0) setHistory(stored);
 
     const storedSession = loadSession();
-    if (storedSession.dl > 0 || storedSession.ul > 0) setSession(storedSession);
+    setSession(storedSession);
 
     fetchStats();
     const interval = setInterval(fetchStats, 2000);
